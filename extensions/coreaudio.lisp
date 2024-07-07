@@ -142,10 +142,11 @@
   (cffi:use-foreign-library coreaudio:audio-toolbox)
   (let ((samplerate (get-device-sample-rate))
         (pack (mixed:pack drain)))
-    (setf (mixed:samplerate pack) samplerate)
-    ;; KLUDGE: this makes it work at all, but introduces nasty latency.
-    (setf (mixed:size pack) (max (mixed:size pack) samplerate))
-    (format *error-output* "~& [CoreAudio] Matching default device sample rate ~d~%" samplerate)))
+    (when pack
+      (setf (mixed:samplerate pack) samplerate)
+      ;; KLUDGE: this makes it work at all, but introduces nasty latency.
+      (setf (mixed:size pack) (max (mixed:size pack) samplerate))
+      (format *error-output* "~& [CoreAudio] Matching default device sample rate ~d~%" samplerate))))
 
 (defmethod mixed:free ((drain drain))
   (mixed:end drain)
