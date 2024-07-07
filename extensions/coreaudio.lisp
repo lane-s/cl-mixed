@@ -129,13 +129,14 @@
       (coreaudio::audio-object-get-property-data device address 0 (cffi:null-pointer) size rate))
     (truncate (cffi:mem-ref rate :double))))
 
-(defclass drain (mixed:drain)
+(defclass drain (mixed:device-drain)
   ((lock :initform (bt:make-lock "CoreAudio sync") :reader lock)
    (cvar :initform (bt:make-condition-variable :name "CoreAudio sync") :reader cvar)
    (thread :initform NIL :accessor thread)
    (buffers :initform NIL :accessor buffers)
    (queue :initform NIL :accessor queue)
-   (ready :initform NIL :accessor ready)))
+   (ready :initform NIL :accessor ready)
+   (device :initform NIL :initarg :device :accessor device)))
 
 (defmethod initialize-instance :after ((drain drain) &key)
   (cffi:use-foreign-library coreaudio:audio-unit)
@@ -148,12 +149,23 @@
       (setf (mixed:size pack) (max (mixed:size pack) samplerate))
       (format *error-output* "~& [CoreAudio] Matching default device sample rate ~d~%" samplerate))))
 
+(defmethod mixed:device ((drain drain))
+  (device drain))
+
+(defmethod (setf mixed:device) (device (drain drain))
+  (mixed:free drain)
+  ;; TODO open core audio device for use
+  device)
+
 (defmethod mixed:free ((drain drain))
   (mixed:end drain)
   (when (queue drain)
     (coreaudio::audio-queue-dispose (queue drain) 1)
     (setf (queue drain) NIL)
-    (setf (buffers drain) NIL)))
+    (setf (buffers drain) NIL))
+  (when (device drain)
+    ;; TODO free core audio device
+    (setf (device drain) NIL)))
 
 (defmethod mixed:start ((drain drain))
   (unless (and (thread drain) (bt:thread-alive-p (thread drain)))
