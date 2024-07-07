@@ -269,6 +269,13 @@
   (data-size :pointer)
   (data :pointer))
 
+(cffi:defcfun (audio-object-get-property-data-size "AudioObjectGetPropertyDataSize") os-status
+  (id :uint32)
+  (object :pointer)
+  (qualifier-size :uint32)
+  (qualifier :pointer)
+  (data-size :pointer))
+
 (cffi:defcfun (audio-component-find-next "AudioComponentFindNext") audio-component
   (component audio-component)
   (description :pointer))

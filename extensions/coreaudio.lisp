@@ -179,6 +179,17 @@
       (loop while (bt:thread-alive-p thread)
             do (sleep 0.1)))))
 
+(defconstant device-id-type :uint32)
+(defconstant device-id-type-size (cffi:foreign-type-size :uint32))
+
+(defun get-num-devices ()
+  (cffi:with-foreign-objects ((address '(:struct coreaudio::audio-object-property-address))
+                              (size :uint32))
+    (init-property-address address "dev#" "glob")
+    (with-error ()
+      (coreaudio::audio-object-get-property-data-size 1 address 0 (cffi:null-pointer) size))
+    (/ (cffi:mem-ref size :uint32) device-id-type-size)))
+
 (defun render-thread (drain)
   (float-features:with-float-traps-masked T
     (let ((pack (mixed:pack drain))
