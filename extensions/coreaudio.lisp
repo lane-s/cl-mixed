@@ -35,7 +35,11 @@
            ,@body)
   #-(or sbcl ccl) `(progn ,@body))
 
+(deftype c-enum-value ()
+  '(simple-array character (4)))
+
 (defun strint (string)
+  (declare (type c-enum-value string))
   (let ((int 0))
     (setf (ldb (byte 8 0) int) (char-code (char string 3)))
     (setf (ldb (byte 8 8) int) (char-code (char string 2)))
