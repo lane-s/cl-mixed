@@ -181,6 +181,7 @@
 
 (defconstant device-id-type :uint32)
 (defconstant device-id-type-size (cffi:foreign-type-size :uint32))
+(defconstant max-device-name-length 64)
 
 (defun get-num-devices ()
   (cffi:with-foreign-objects ((address '(:struct coreaudio::audio-object-property-address))
@@ -189,6 +190,15 @@
     (with-error ()
       (coreaudio::audio-object-get-property-data-size 1 address 0 (cffi:null-pointer) size))
     (/ (cffi:mem-ref size :uint32) device-id-type-size)))
+
+(defun get-device-name (device-id)
+  (cffi:with-foreign-objects ((address '(:struct coreaudio::audio-object-property-address))
+                              (size :uint32))
+    (cffi:with-foreign-string (device-name (make-string max-device-name-length))
+      (init-property-address address "name" "glob")
+      (with-error ()
+        (coreaudio::audio-object-get-property-data device-id address 0 (cffi:null-pointer) size device-name))
+      (cffi:foreign-string-to-lisp device-name))))
 
 (defun render-thread (drain)
   (float-features:with-float-traps-masked T
