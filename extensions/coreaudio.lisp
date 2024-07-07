@@ -200,6 +200,18 @@
         (coreaudio::audio-object-get-property-data device-id address 0 (cffi:null-pointer) size device-name))
       (cffi:foreign-string-to-lisp device-name))))
 
+(defmethod mixed:list-devices ((drain drain))
+  (let ((num-devices (get-num-devices)))
+    (cffi:with-foreign-objects ((address '(:struct coreaudio::audio-object-property-address))
+                                (size :uint32)
+                                (device-id-array device-id-type num-devices))
+      (init-property-address address "dev#" "glob")
+      (with-error ()
+        (coreaudio::audio-object-get-property-data 1 address 0 (cffi:null-pointer) size device-id-array))
+      (loop for device-index below num-devices
+            for device-id = (cffi:mem-aref device-id-array device-id-type device-index)
+            collect (cons device-id (get-device-name device-id))))))
+
 (defun render-thread (drain)
   (float-features:with-float-traps-masked T
     (let ((pack (mixed:pack drain))
